@@ -48,10 +48,12 @@ mod service;
 fn handle_start_service(args: &StartServiceInput) -> Result<StartServiceOutput> {
     debug!("handle_start_service");
     let listen_address = args.config.api_endpoints.frontend.listen_address;
-    let ias_config = args.config.ias.as_ref().unwrap();
-    let attestation = RemoteAttestation::generate_and_endorse(&AttestationConfig::ias(
-        &ias_config.ias_key,
-        &ias_config.ias_spid,
+    let as_config = &args.config.attestation;
+    let attestation = RemoteAttestation::generate_and_endorse(&AttestationConfig::new(
+        &as_config.algorithm,
+        &as_config.url,
+        &as_config.key,
+        &as_config.spid,
     ))
     .unwrap();
     let config = SgxTrustedTlsServerConfig::new_without_verifier(
@@ -75,7 +77,7 @@ fn handle_start_service(args: &StartServiceInput) -> Result<StartServiceOutput> 
         .client_cert(&attestation.cert, &attestation.private_key)
         .attestation_report_verifier(
             vec![enclave_attr],
-            BUILD_CONFIG.ias_root_ca_cert,
+            BUILD_CONFIG.as_root_ca_cert,
             verifier::universal_quote_verifier,
         );
     let authentication_service_address = &args

@@ -65,7 +65,7 @@ fn start_internal_endpoint(
             accepted_enclave_attrs,
             &attestation.cert,
             &attestation.private_key,
-            BUILD_CONFIG.ias_root_ca_cert,
+            BUILD_CONFIG.as_root_ca_cert,
             verifier::universal_quote_verifier,
         )
         .unwrap()
@@ -147,11 +147,13 @@ fn handle_start_service(args: &StartServiceInput) -> Result<StartServiceOutput> 
         .collect();
     let api_listen_address = args.config.api_endpoints.authentication.listen_address;
     let internal_listen_address = args.config.internal_endpoints.authentication.listen_address;
-    let ias_config = args.config.ias.as_ref().unwrap();
+    let as_config = &args.config.attestation;
     let attestation = Arc::new(
-        RemoteAttestation::generate_and_endorse(&AttestationConfig::ias(
-            &ias_config.ias_key,
-            &ias_config.ias_spid,
+        RemoteAttestation::generate_and_endorse(&AttestationConfig::new(
+            &as_config.algorithm,
+            &as_config.url,
+            &as_config.key,
+            &as_config.spid,
         ))
         .unwrap(),
     );
